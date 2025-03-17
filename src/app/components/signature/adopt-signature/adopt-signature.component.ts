@@ -426,137 +426,16 @@ loading: boolean = false;
   // }
 
 
-
-  getImageData(initials: boolean = false): Promise<ISignatureData> {
-    return new Promise((resolve, reject) => {
-      this.loading = true;
-  
-      console.log('COMING TO GET THE IMAGE DATA', {
-        fileId: this.fileId,
-        orderId: this.orderId,
-        userId: this.userId,
-        filePath: this.filePath,
-      });
-  
-      const lib = initials ? this.rxInitials : this.rxSignature;
-      const maxsize = lib.getmaxsizeScaled();
-      let signcanv;
-      let imageData;
-  
-      switch (this.tabActiveIndex) {
-        case 0: // 🎨 Draw Signature Case
-          lib.signFreepen(false);
-          signcanv = lib.getDrawSigncanvas();
-  
-          if (signcanv.height > maxsize.h) {
-            const cnvscale = maxsize.h / signcanv.height;
-            const dwnscalecnv = lib.downScaleCanvas(signcanv.cnv, cnvscale);
-            signcanv.height *= cnvscale;
-            signcanv.width *= cnvscale;
-            signcanv.cnv = dwnscalecnv;
-          }
-  
-          imageData = signcanv.cnv.toDataURL();
-          break;
-  
-        case 1: // 🔤 Text Signature Case
-          signcanv = lib.getTextSigncanvas();
-          imageData = signcanv.cnv.toDataURL();
-          break;
-  
-        case 2: // 🖼️ Image Signature Case
-          signcanv = lib.getImageSigncanvas(this.bwConversion1);
-  
-          if (signcanv.height > maxsize.h) {
-            const cnvscale = maxsize.h / signcanv.height;
-            const dwnscalecnv = lib.downScaleCanvas(signcanv.cnv, cnvscale);
-            signcanv.height *= cnvscale;
-            signcanv.width *= cnvscale;
-            signcanv.cnv = dwnscalecnv;
-          }
-  
-          if (initials ? this.bwConversion2 : this.bwConversion1) {
-            const context: any = signcanv.cnv.getContext('2d');
-            const imgData = context.getImageData(0, 0, signcanv.width, signcanv.height);
-            let data = imgData.data;
-            for (let i = 0; i < data.length; i += 4) {
-              let constra = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
-              data[i] = constra;
-              data[i + 1] = constra;
-              data[i + 2] = constra;
-            }
-            context.putImageData(imgData, 0, 0);
-          }
-  
-          imageData = signcanv.cnv.toDataURL();
-          break;
-  
-        default:
-          return reject('Invalid tab selection');
-      }
-  
-      console.log(`----->>>>> Case ${this.tabActiveIndex}`, {
-        signcanv,
-        src: imageData,
-        data: signcanv.cnv,
-      });
-  
-      // ✅ Send API request
-      fetch(`${NEST_URL}/api/v1/universal/save-signatures`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: imageData,
-          // orderId: this.orderId || 'a3f8636d-fc27-48a1-af92-91120c706853',
-          // fileId: this.fileId || '58c625cc-d473-4594-af92-29e9b3725f88',
-          orderId: this.orderId,
-          fileId: this.fileId,
-          initials: initials ? 'initials' : 'signature',
-        }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log('Signature uploaded successfully:', data);
-          this.showMessage('Signature uploaded successfully!', 'success');
-          resolve({
-            width: signcanv.width,
-            height: signcanv.height,
-            src: imageData,
-            data: signcanv.cnv,
-          });
-        })
-        .catch((error) => {
-          console.error('Error uploading signature:', error);
-          this.showMessage('Failed to upload signature. Please try again.', 'error');
-          reject(error);
-        })
-        .finally(() => {
-          this.loading = false;
-        });
-    });
-  }
-  
-
   onCreateClick(): void {
     this.validate();
     if (!this.isValid) return;
-  
+
     this.loading = true; // ✅ Show loading while processing
-  
-    const signaturePromise = this.mode !== 'editInitials' ? this.getImageData() : Promise.resolve(undefined);
-    const initialsPromise = this.mode !== 'editSignature' ? this.getImageData(true) : Promise.resolve(undefined);
-  
-    Promise.all([signaturePromise, initialsPromise])
-      .then(([signature, initials]) => {
-        this.onAdopt.emit({ signature, initials });
-        this.onCancel.emit(); // ✅ Close modal after all API calls succeed
+
+    this.getImageData()
+      .then((signature) => {
+        this.onAdopt.emit({ signature });
+        this.onCancel.emit(); // ✅ Close modal after successful API call
       })
       .catch((error) => {
         console.error('Error while creating signature:', error);
@@ -565,8 +444,122 @@ loading: boolean = false;
       .finally(() => {
         this.loading = false; // ✅ Hide loading
       });
-  }
-  
+}
+
+getImageData(): Promise<ISignatureData> {
+    return new Promise((resolve, reject) => {
+        this.loading = true;
+
+        console.log('Fetching signature image data', {
+            fileId: this.fileId,
+            orderId: this.orderId,
+            userId: this.userId,
+            filePath: this.filePath,
+        });
+
+        const lib = this.rxSignature;
+        const maxsize = lib.getmaxsizeScaled();
+        let signcanv;
+        let imageData;
+
+        switch (this.tabActiveIndex) {
+            case 0: // 🎨 Draw Signature Case
+                lib.signFreepen(false);
+                signcanv = lib.getDrawSigncanvas();
+
+                if (signcanv.height > maxsize.h) {
+                    const cnvscale = maxsize.h / signcanv.height;
+                    const dwnscalecnv = lib.downScaleCanvas(signcanv.cnv, cnvscale);
+                    signcanv.height *= cnvscale;
+                    signcanv.width *= cnvscale;
+                    signcanv.cnv = dwnscalecnv;
+                }
+
+                imageData = signcanv.cnv.toDataURL();
+                break;
+
+            case 1: // 🔤 Text Signature Case
+                signcanv = lib.getTextSigncanvas();
+                imageData = signcanv.cnv.toDataURL();
+                break;
+
+            case 2: // 🖼️ Image Signature Case
+                signcanv = lib.getImageSigncanvas(this.bwConversion1);
+
+                if (signcanv.height > maxsize.h) {
+                    const cnvscale = maxsize.h / signcanv.height;
+                    const dwnscalecnv = lib.downScaleCanvas(signcanv.cnv, cnvscale);
+                    signcanv.height *= cnvscale;
+                    signcanv.width *= cnvscale;
+                    signcanv.cnv = dwnscalecnv;
+                }
+
+                if (this.bwConversion1) {
+                    const context: any = signcanv.cnv.getContext('2d');
+                    const imgData = context.getImageData(0, 0, signcanv.width, signcanv.height);
+                    let data = imgData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        let constra = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
+                        data[i] = constra;
+                        data[i + 1] = constra;
+                        data[i + 2] = constra;
+                    }
+                    context.putImageData(imgData, 0, 0);
+                }
+
+                imageData = signcanv.cnv.toDataURL();
+                break;
+
+            default:
+                return reject('Invalid tab selection');
+        }
+
+        console.log(`Generated Signature Data for Case ${this.tabActiveIndex}`, {
+            signcanv,
+            src: imageData,
+            data: signcanv.cnv,
+        });
+
+        // ✅ Send API request
+        fetch(`${NEST_URL}/api/v1/universal/save-signatures`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                image: imageData,
+                orderId: this.orderId,
+                fileId: this.fileId,
+                initials: 'signature',
+            }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                console.log('Signature uploaded successfully:', data);
+                this.showMessage('Signature uploaded successfully!', 'success');
+                resolve({
+                    width: signcanv.width,
+                    height: signcanv.height,
+                    src: imageData,
+                    data: signcanv.cnv,
+                });
+            })
+            .catch((error) => {
+                console.error('Error uploading signature:', error);
+                this.showMessage('Failed to upload signature. Please try again.', 'error');
+                reject(error);
+            })
+            .finally(() => {
+                this.loading = false;
+            });
+    });
+}
+
 
 
   // onCreateClick(): void {

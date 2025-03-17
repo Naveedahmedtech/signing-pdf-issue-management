@@ -6,6 +6,7 @@ import { MARKUP_TYPES } from 'src/rxcore/constants';
 import { IGuiConfig } from 'src/rxcore/models/IGuiConfig';
 import { UserService } from '../user/user.service';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { SignatureService } from '../signature/signature.service';
 
 
 @Component({
@@ -88,7 +89,9 @@ export class AnnotationToolsComponent implements OnInit {
   constructor(
     private readonly service: AnnotationToolsService,
     private readonly rxCoreService: RxCoreService,
-    private readonly userService: UserService) { }
+    private readonly userService: UserService,
+    private readonly signatureService: SignatureService
+  ) { }
 
   ngOnInit(): void {
     this.guiConfig$.subscribe(config => {
@@ -206,6 +209,9 @@ export class AnnotationToolsComponent implements OnInit {
     
   }
 
+  onAddClick(): void {
+    this.signatureService.adoptSignatureOpened.next({ opened: true, mode: 'create' });
+  }
   onActionSelect(actionName: string) {
     const selected = this.isActionSelected[actionName];
     this._deselectAllActions();

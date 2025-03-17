@@ -94,7 +94,8 @@ export class TopNavMenuComponent implements OnInit {
       this.isPDF = state.isPDF;
 
       if (this.compareService.isComparisonActive) {
-        const value = this.options.find(option => option.value == "compare");
+        // const value = this.options.find(option => option.value == "compare");
+        const value = this.options[3]
         if (value) {
           this.onModeChange(value, false);
         }
@@ -103,9 +104,11 @@ export class TopNavMenuComponent implements OnInit {
 
     this.rxCoreService.guiMode$.subscribe(mode => {
       this.guiMode = mode;
-      const value = this.options.find(option => option.value == mode);
+      // const value = this.options.find(option => option.value == mode);
+      const value = this.options[3]
+
       if (value) {
-        this.onModeChange(value, false);
+        this.onModeChange(value, true);
       }
     });
 
@@ -210,11 +213,11 @@ export class TopNavMenuComponent implements OnInit {
   }
 
   onModeChange(option: any, broadcast: boolean = true) {
-    this.selectedValue = option;
+    this.selectedValue = this.options[3];
     this.annotationToolsService.setSelectedOption(option);
 
-    if (option.value === 'annotate' || option.value === 'compare' || option.value === 'measure') {
-      if (option.value === 'compare') {
+    if (this.options[3].value === 'annotate' || this.options[3].value === 'compare' || this.options[3].value === 'measure') {
+      if (this.options[3].value === 'compare') {
         this.rxCoreService.setGuiConfig({
           canSignature: true,
           canAnnotate: true,
@@ -290,7 +293,7 @@ export class TopNavMenuComponent implements OnInit {
           });
         } else {
 
-          if (option.value === 'measure') {
+          if (this.options[3].value === 'measure') {
             this.rxCoreService.setGuiConfig({
               disableMarkupTextButton: true,
               disableMarkupCalloutButton: true,
@@ -317,7 +320,7 @@ export class TopNavMenuComponent implements OnInit {
               this.annotationToolsService.setMeasurePanelState({ visible: true }); 
             
   
-          } else if(option.value === 'annotate'){
+          } else if(this.options[3].value === 'annotate'){
             this.rxCoreService.setGuiConfig({
               disableMarkupTextButton: false,
               disableMarkupCalloutButton: false,
@@ -360,7 +363,7 @@ export class TopNavMenuComponent implements OnInit {
 
 
     if (broadcast) {
-      this.rxCoreService.setGuiMode(option.value);
+      this.rxCoreService.setGuiMode(this.options[3].value);
     }
   }
 

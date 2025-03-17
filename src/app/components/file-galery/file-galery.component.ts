@@ -180,7 +180,7 @@ export class FileGaleryComponent implements OnInit {
     private readonly fileGaleryService: FileGaleryService,
     private readonly rxCoreService: RxCoreService,
     private readonly adoptSignatureService: AdoptSignatureService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   //constructor(private readonly fileGaleryService: FileGaleryService) { }
@@ -230,6 +230,7 @@ export class FileGaleryComponent implements OnInit {
       }, 1000);
     }
   }
+
 
   loadFileById(filePath: string) {
     // console.log('Loading file with filepath:', filePath);
