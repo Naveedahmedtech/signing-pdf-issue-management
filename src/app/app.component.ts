@@ -11,6 +11,7 @@ import { Title } from '@angular/platform-browser';
 import { IGuiConfig } from 'src/rxcore/models/IGuiConfig';
 import { CollabService } from './services/collab.service';
 import { AdoptSignatureService } from './components/signature/adopt-signature/adopt-signature.service';
+import { EventCommunicationService } from './services/event-communication.service';
 
 
 
@@ -62,6 +63,7 @@ export class AppComponent implements AfterViewInit {
     private readonly collabService: CollabService,  
     private titleService:Title,
     private readonly adoptSignatureService: AdoptSignatureService,
+    private eventService: EventCommunicationService
   ) { }
 
   ngOnInit() {
@@ -91,7 +93,9 @@ export class AppComponent implements AfterViewInit {
     const filePath = parameters.get('filePath');
     const orderId = parameters.get('orderId');
     const userId = parameters.get('userId');
+    const reactSource = parameters.get('source');
     const roomName = parameters.get('roomName');
+    const projectId = parameters.get('projectId');
     if (fileId) {
       this.adoptSignatureService.setFileId(fileId);
     }
@@ -104,8 +108,14 @@ export class AppComponent implements AfterViewInit {
     if (orderId) {
       this.adoptSignatureService.setOrderId(orderId);
     }
+    if (projectId) {
+      this.adoptSignatureService.setProjectId(projectId);
+    }
     if (userId) {
       this.adoptSignatureService.setUserId(userId);
+    }
+    if(reactSource) {
+      this.adoptSignatureService.setReactSource(reactSource)
     }
     if (this.canCollaborate && roomName) {
       const user = this.userService.getCurrentUser();
@@ -349,6 +359,9 @@ export class AppComponent implements AfterViewInit {
 
     RXCore.onGuiMarkup((annotation: any, operation: any) => {
       console.log('RxCore GUI_Markup:', annotation, operation);
+      if(annotation) {
+        this.eventService.updateStatus(true);
+      }
       if (annotation !== -1 || this.rxCoreService.lastGuiMarkup.markup !== -1) {
         this.rxCoreService.setGuiMarkup(annotation, operation);
 

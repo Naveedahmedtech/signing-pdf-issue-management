@@ -1,1 +1,85 @@
-<button class="floating-btn" (click)="onAddClick()">Add Signature</button>
+<div *ngIf="reactSource === 'signing'">
+    <button class="floating-btn" (click)="onAddClick()">Add Signature</button>
+</div>
+<div *ngIf="reactSource === 'annotation'">
+  <div *ngIf="!isIssueTitleModalOpen">
+    <button class="floating-btn" (click)="openIssueTitleModal()">Create Issue</button>
+  </div>
+    <div class="modal-overlay" *ngIf="isIssueTitleModalOpen">
+      <div class="modal-window">
+        <header class="modal-header">
+          <h2 *ngIf="!issueTitle">Enter Issue Details</h2>
+          <h2 *ngIf="issueTitle && !isActive">Drag to Place the Icon</h2>
+    
+          <!-- Close Button -->
+          <button class="close-button" (click)="closeIssueTitleModal()">✖</button>
+        </header>
+    
+        <!-- Input fields when isActive is false -->
+        <div class="modal-body" *ngIf="!isActive && !issueTitle">
+          <label for="issue-title-input">Title</label>
+          <input id="issue-title-input" type="text" [(ngModel)]="tempIssueTitle" placeholder="Enter issue title" required />
+    
+          <label for="issue-description">Description</label>
+          <textarea id="issue-description" [(ngModel)]="issueDescription" placeholder="Enter issue description"></textarea>
+          <!-- Capture Image from Camera -->
+          <label for="issue-image">Attach Image (Take Photo)</label>
+          <input
+            type="file"
+            id="issue-image"
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            capture="environment"
+          />
+        </div>
+    
+        <!-- Show preview when isActive is true -->
+        <div class="modal-body preview-mode" *ngIf="isActive && issueTitle">
+          <h3>Preview Issue Details</h3>
+          <div class="preview-field">
+            <label><strong>Title:</strong></label>
+            <p>{{ issueTitle || 'No Title Provided' }}</p>
+          </div>
+          <div class="preview-field" *ngIf="!isLoading">
+            <label><strong>Description:</strong></label>
+            <textarea [(ngModel)]="issueDescription" placeholder="No Description Provided"></textarea>
+          </div>
+          <div class="preview-field" *ngIf="isLoading">
+            <label><strong>Description:</strong></label>
+            <p>{{issueDescription}}</p>
+          </div>
+        </div>
+        <div class="templates-list" [ngClass]="{ 'hidden': isActive && issueTitle && isIssueTitleModalOpen }" *ngIf="issueTitle && isIssueTitleModalOpen">
+          <img
+            *ngFor="let template of templates"
+            [stampTemplate]="template"
+            [src]="template.src"
+            [ngStyle]="{ 'width.px': template.width, 'height.px': template.height }"
+          />
+        </div>
+        <div *ngIf="createdAnnotation" class="annotation-message">
+          <p>Annotation created successfully.</p>
+        </div>
+    
+        <!-- Footer buttons -->
+        <footer class="modal-footer" *ngIf="!isActive">
+          <button class="btn-secondary" (click)="closeIssueTitleModal()">Back</button>
+          <button class="btn-primary" (click)="onNextIssueTitle()">Next</button>
+        </footer>
+    
+        <!-- Show loading spinner while creating issue -->
+        <div *ngIf="isLoading" class="loading-container">
+          <div class="spinner"></div>
+          <p>Creating issue, please wait...</p>
+        </div>
+    
+        <!-- Show "Create" button when ready -->
+        <div class="modal-footer" *ngIf="isActive && issueTitle">
+          <button class="btn-primary" [ngClass]="{'hidden': isLoading }" [disabled]="isLoading" (click)="onSubmitCreateIssue()">
+            <span *ngIf="!isLoading">Create</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+</div>

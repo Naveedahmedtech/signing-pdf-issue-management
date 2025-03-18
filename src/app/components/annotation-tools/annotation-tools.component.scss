@@ -23,3 +23,186 @@
     transform: scale(1.05);
   }
   
+
+  
+
+/* Update modal overlay to allow interactions outside the modal */
+/* Floating modal overlay (Bottom-Right) */
+.modal-overlay {
+  position: fixed;
+  bottom: 25%; /* Adjust position slightly higher */
+  right: 10px;
+  width: auto;
+  height: auto;
+  background: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  z-index: 1000;
+  padding: 10px;
+}
+
+/* Floating modal window */
+.modal-window {
+  background: white;
+  width: 300px; /* Slightly smaller for a compact look */
+  max-width: 90%;
+  border-radius: 10px;
+  padding: 12px 15px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+  transform: translateY(10px);
+  animation: slideIn 0.25s ease-out;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Slide-in animation */
+@keyframes slideIn {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(10px);
+    opacity: 1;
+  }
+}
+
+/* Close button */
+.close-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #555;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: red;
+}
+
+/* Modern modal header */
+.modal-header {
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 8px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+/* Form inputs section */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Labels */
+.modal-body label {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  display: block;
+  color: #444;
+}
+
+/* Input fields */
+input, textarea {
+  width: 100%;
+  padding: 6px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  background: #f8f8f8;
+  transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+input:focus, textarea:focus {
+  border-color: #d49f00;
+  background: white;
+}
+
+/* Adjust textarea height */
+textarea {
+  min-height: 40px;
+  resize: vertical;
+}
+
+/* Footer buttons */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Secondary button */
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  padding: 8px;
+  width: 48%;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-secondary:hover {
+  background-color: #ddd;
+}
+
+/* Loading spinner */
+.loading-container {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Hide elements dynamically */
+.hidden {
+  display: none;
+}
+
+/* Image preview styling */
+.image-preview {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.image-preview img {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+

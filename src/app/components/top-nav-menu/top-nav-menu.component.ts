@@ -8,10 +8,13 @@ import { IGuiConfig } from 'src/rxcore/models/IGuiConfig';
 import { CompareService } from '../compare/compare.service';
 import { TopNavMenuService } from './top-nav-menu.service';
 import { GuiMode } from 'src/rxcore/enums/GuiMode';
-import { Subscription } from 'rxjs';
+import { combineLatest, first, Subscription } from 'rxjs';
 import { SideNavMenuService } from '../side-nav-menu/side-nav-menu.service';
 import { MeasurePanelService } from '../annotation-tools/measure-panel/measure-panel.service';
 import { ActionType } from './type';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { NEST_URL } from 'src/app/constants';
+import { AdoptSignatureService } from '../signature/adopt-signature/adopt-signature.service';
 
 
 @Component({
@@ -64,7 +67,9 @@ export class TopNavMenuComponent implements OnInit {
     private readonly compareService: CompareService,
     private readonly service: TopNavMenuService,
     private readonly sideNavMenuService: SideNavMenuService,
-    private readonly measurePanelService: MeasurePanelService
+    private readonly measurePanelService: MeasurePanelService,
+    private http: HttpClient,
+    private readonly adoptSignatureService: AdoptSignatureService,
     ) {
   }
 
@@ -85,7 +90,18 @@ export class TopNavMenuComponent implements OnInit {
 
   ngOnInit(): void {
     this._setOptions();
-
+    this.adoptSignatureService.topNavMethodTrigger$.subscribe(() => {
+      this.onGetURL()
+        .then(() => {
+          // Do something after success
+          this.adoptSignatureService.notifyFileUploadStatus(true, "File uploaded successfully!");
+        })
+        .catch((error) => {
+          console.error("Failed:", error);
+          // Handle error case
+          this.adoptSignatureService.notifyFileUploadStatus(false, "File upload failed: " + error);
+        });
+    });
     this.rxCoreService.guiState$.subscribe((state) => {
       this.guiState = state;
       this.canChangeSign = state.numpages && state.isPDF && RXCore.getCanChangeSign();
@@ -530,5 +546,87 @@ export class TopNavMenuComponent implements OnInit {
     this.guiOnNoteSelected.unsubscribe();
   }
 
+
+
+  onGetURL(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // 🔄 Wait until active file is available
+      if (!this.state?.activefile) {
+        console.error("⚠️ No active file available. Retrying in 500ms...");
+        setTimeout(() => this.onGetURL().then(resolve).catch(reject), 500);
+        return;
+      }
+
+      this.burgerOpened = false;
+
+      RXCore.getPdfUrl()
+        .then((url) => {
+          return fetch(url)
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Failed to fetch the file from the provided URL.");
+              }
+              return response.blob(); // Convert response to Blob
+            })
+            .then((blob) => {
+              // Fetch all necessary values at once using `combineLatest`
+              combineLatest([
+                this.adoptSignatureService.filePath$.pipe(first()),
+                this.adoptSignatureService.fileId$.pipe(first()),
+                this.adoptSignatureService.userId$.pipe(first()),
+                this.adoptSignatureService.issueId$.pipe(first()),
+              ]).subscribe(([filePath, fileId, userId, issueId]) => {
+
+                if (!filePath || !fileId || !userId || !issueId) {
+                  reject("Missing required data (filePath, fileId, issueId, or userId).");
+                  return;
+                }
+
+                // Define the file name
+                const fileName = filePath.split("/").pop() || "annotation.pdf";
+
+                // Upload and handle success/error
+                this.uploadToServer(blob, fileName, fileId, userId, issueId)
+                  .then(() => {
+                    resolve(); // ✅ Success
+                  })
+                  .catch((error) => {
+                    console.error("❌ Upload failed:", error);
+                    reject(error); // ❌ Failure
+                  });
+              });
+            });
+        })
+        .catch((error) => {
+          console.error("❌ Error fetching PDF URL:", error);
+          reject(error);
+        });
+    });
+  }
+
+  uploadToServer(file: Blob, fileName: string = "hello.pdf", fileId: string, userId: string, issueId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("files", file, fileName);
+
+      const headers = new HttpHeaders(); // Add any headers if needed (e.g., Authorization)
+
+      this.http
+        .put(
+          `${NEST_URL}/api/v1/universal/upload/${fileId}?userId=${userId}&issueId=${issueId}`,
+          formData,
+          { headers }
+        )
+        .subscribe({
+          next: (response) => {
+            resolve(); // ✅ Success
+          },
+          error: (error) => {
+            console.error("Error uploading file:", error);
+            reject(error); // ❌ Failure
+          },
+        });
+    });
+  }
 
 }

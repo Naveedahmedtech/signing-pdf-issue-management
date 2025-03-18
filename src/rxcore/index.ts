@@ -519,7 +519,16 @@ export class RXCore {
     public static textSelect(onoff: boolean): void {
         RxCore.textSelect(onoff);
     }
-
+    public static getPdfUrl(paperSize: string = 'A4'): Promise<string> {
+        return new Promise((resolve, reject) => {
+          const url = RxCore.getPdfUrl(false, 'PDF', '0', paperSize, '1');
+          if (url instanceof Promise) {
+            url.then(resolve).catch(reject);
+          } else {
+            reject(new Error("Failed to get PDF URL."));
+          }
+        });
+      }
     public static markUpErase(onoff: boolean): void {
         RxCore.markUpErase(onoff);
     }
@@ -1217,6 +1226,10 @@ export class RXCore {
     public static setUniqueMarkupfromJSON(markupJSON: any, DocRef : any): void {
         RxCore.setUniqueMarkupfromJSON(markupJSON, DocRef);
     }
+
+
+
+
 
 
 }
